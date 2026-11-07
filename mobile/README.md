@@ -1,28 +1,38 @@
 # Mobile app (Expo / React Native)
 
-## Run it on your phone
+## Run it on your phone (works on any network)
+
+Use this on campus Wi-Fi, eduroam or at the hackathon venue, where devices usually can't reach each other directly.
 
 1. Install **Expo Go** from the App Store or Google Play.
-2. Start the backend (see the main README) with `--host 0.0.0.0`.
-3. Set the backend address. Copy `.env.example` to `.env` and put your laptop's Wi-Fi IP in it (`ipconfig` on Windows):
+2. Deploy the backend to Render (see the main README) and check `https://<your-service>.onrender.com/health` works.
+3. Copy `.env.example` to `.env` and set the backend address:
    ```
-   EXPO_PUBLIC_API_URL=http://192.168.x.x:8000
+   EXPO_PUBLIC_API_URL=https://<your-service>.onrender.com
    ```
-4. Install and start:
+4. Install and start with a tunnel:
    ```bash
    npm install
-   npx expo start
+   npm run tunnel
    ```
-5. Scan the QR code with your phone camera (iPhone) or Expo Go (Android). Phone and laptop must be on the same Wi-Fi.
+5. Scan the QR code with your phone camera (iPhone) or Expo Go (Android). Your phone can be on any network, even mobile data.
 
-If the app says it can't reach the server, open `http://<laptop-ip>:8000/health` in the phone's browser. If that fails too, allow Python through Windows Firewall on private networks.
+The tunnel sends the app's code through Expo's tunnel service, so loading is slower than on local Wi-Fi. Restart after changing `.env`.
 
-Restart `npx expo start` after changing `.env`.
+## Run it on home Wi-Fi (faster, no deploy needed)
+
+Only works on a network that lets devices talk to each other, and with any VPN on the laptop turned off.
+
+1. Start the backend locally (see the main README) with `--host 0.0.0.0`.
+2. In `.env`, use your laptop's Wi-Fi IP (`ipconfig` on Windows): `EXPO_PUBLIC_API_URL=http://192.168.x.x:8000`.
+3. Run `npx expo start` and scan the QR code. Phone and laptop must be on the same Wi-Fi.
+
+If you get timeouts, open `http://<laptop-ip>:8000/health` in the phone's browser. If that doesn't load, the network or a VPN is blocking it; use the tunnel setup above.
 
 ## Code layout
 
 - `App.tsx`: switches between the three screens (a simple state machine, no navigation library).
-- `api.ts`: `scan(photoUri)` and `getRules()`, plus types matching the backend's JSON.
+- `api.ts`: `scan(photoUri)`, `getRules()` and `warmUp()` (wakes a sleeping Render server when the app opens), plus types matching the backend's JSON.
 - `screens/ScanScreen.tsx`: camera and shutter button. Shrinks each photo to 640px wide before uploading; the model works at 416x416, so bigger images only slow the upload.
 - `screens/ResultScreen.tsx`: full-screen card coloured by bin, with the tip and exceptions. Shows "Probably X?" when confidence is low.
 - `screens/LookupScreen.tsx`: searchable list from `GET /rules`, for when the camera can't identify something.
@@ -31,7 +41,7 @@ Photo upload uses React Native's `FormData` file format, so scanning works on ph
 
 ## API contract
 
-Base URL: your laptop's Wi-Fi IP during development (`http://192.168.x.x:8000`), or the deployed URL.
+Base URL: the deployed Render URL, or your laptop's Wi-Fi IP during development (`http://192.168.x.x:8000`).
 
 ### `POST /scan`
 

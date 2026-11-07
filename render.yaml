@@ -1,0 +1,17 @@
+# Render Blueprint: deploys the backend as a free web service.
+# Set up once in the Render dashboard: New > Blueprint > pick this repo.
+# Render asks for ROBOFLOW_API_KEY during setup; it is never stored in git.
+services:
+  - type: web
+    name: waste-sorter-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: ROBOFLOW_API_KEY
+        sync: false
