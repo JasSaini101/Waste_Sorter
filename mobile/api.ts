@@ -26,7 +26,8 @@ export type ScanResult = {
   detections: { label: string; confidence: number; box: Box | null }[];
 };
 
-const TIMEOUT_MS = 20000;
+// Render's free tier sleeps after 15 idle minutes and takes up to a minute to wake.
+const TIMEOUT_MS = 70000;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
@@ -60,4 +61,9 @@ export function scan(photoUri: string): Promise<ScanResult> {
 
 export function getRules(): Promise<Rule[]> {
   return request<Rule[]>("/rules");
+}
+
+/** Wake a sleeping server while the user is still lining up their first photo. */
+export function warmUp(): void {
+  request("/health").catch(() => {});
 }

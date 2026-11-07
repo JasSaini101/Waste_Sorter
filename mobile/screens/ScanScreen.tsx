@@ -15,6 +15,7 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
   const [busy, setBusy] = useState(false);
+  const [slow, setSlow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
@@ -39,6 +40,8 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
     if (!camera.current || busy) return;
     setBusy(true);
     setError(null);
+    // If the server was asleep the first scan can take a while; say so instead of looking frozen.
+    const slowTimer = setTimeout(() => setSlow(true), 6000);
     try {
       const photo = await camera.current.takePictureAsync({ quality: 0.8, shutterSound: false });
       // The model works at 416x416, so a 640px-wide JPEG uploads fast without losing accuracy.
@@ -48,6 +51,8 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
     } finally {
+      clearTimeout(slowTimer);
+      setSlow(false);
       setBusy(false);
     }
   }
@@ -62,6 +67,7 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
         {error && <Text style={styles.error}>{error}</Text>}
+        {slow && <Text style={styles.hint}>Waking up the server, this can take up to a minute…</Text>}
         <Pressable
           style={[styles.shutter, busy && styles.shutterBusy]}
           onPress={capture}

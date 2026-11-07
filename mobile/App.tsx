@@ -1,7 +1,8 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { warmUp } from "./api";
 import LookupScreen from "./screens/LookupScreen";
 import ResultScreen, { ResultInfo } from "./screens/ResultScreen";
 import ScanScreen from "./screens/ScanScreen";
@@ -11,6 +12,8 @@ type Screen = { name: "scan" } | { name: "lookup" } | { name: "result"; result: 
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: "scan" });
+
+  useEffect(warmUp, []);
 
   const goScan = () => setScreen({ name: "scan" });
   const goLookup = () => setScreen({ name: "lookup" });
