@@ -7,10 +7,13 @@ Then from a phone on the same Wi-Fi, use http://<your-laptop-ip>:8000
 Interactive docs: http://localhost:8000/docs
 """
 
+import html
 import io
+import os
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from PIL import Image, UnidentifiedImageError
 
 from classifier import classify
@@ -26,6 +29,35 @@ app = FastAPI(title="Waste Sorter API")
 
 # Lets the Expo web build and local tools call the API. Native apps don't need this.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+
+# Where the web version of the app lives, linked from this API's home page.
+WEB_APP_URL = os.environ.get("WEB_APP_URL", "https://waste-sorter-web.onrender.com")
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def home() -> str:
+    """Friendly page for people who open the API's address in a browser."""
+    url = html.escape(WEB_APP_URL)
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waste Sorter API</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; padding: 0 1rem;
+         line-height: 1.5; color: #1f2933; background: #fff; }}
+  a.button {{ display: inline-block; background: #2E7DD7; color: #fff; padding: .8rem 1.4rem;
+              border-radius: .6rem; text-decoration: none; font-weight: 600; }}
+  code {{ background: #f1f2f4; padding: .1rem .3rem; border-radius: .25rem; }}
+  .ok {{ color: #3A9D4F; font-weight: 600; }}
+</style></head>
+<body>
+  <h1>♻️ Waste Sorter API</h1>
+  <p class="ok">The server is running.</p>
+  <p>This is the backend. To scan waste, open the app:</p>
+  <p><a class="button" href="{url}">Open Waste Sorter</a></p>
+  <p>For developers: <a href="/docs">API docs</a> · <code>POST /scan</code> · <code>GET /rules</code> · <code>GET /health</code></p>
+</body></html>"""
 
 
 @app.get("/health")
