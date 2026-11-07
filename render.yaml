@@ -1,7 +1,8 @@
-# Render Blueprint: deploys the backend as a free web service.
+# Render Blueprint: deploys the backend API and the web version of the app.
 # Set up once in the Render dashboard: New > Blueprint > pick this repo.
 # Render asks for ROBOFLOW_API_KEY during setup; it is never stored in git.
 services:
+  # Backend API (Python). The phone app and website both call this.
   - type: web
     name: waste-sorter-api
     runtime: python
@@ -15,3 +16,21 @@ services:
         value: 3.11.11
       - key: ROBOFLOW_API_KEY
         sync: false
+
+  # Web version of the phone app: anyone can open it in a phone browser, no Expo Go needed.
+  - type: web
+    name: waste-sorter-web
+    runtime: static
+    rootDir: mobile
+    buildCommand: npm ci && npx expo export --platform web
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Baked into the website at build time. Change it if the API's URL changes.
+      - key: EXPO_PUBLIC_API_URL
+        value: https://waste-sorter-api.onrender.com

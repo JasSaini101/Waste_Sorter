@@ -32,24 +32,39 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 - Interactive docs: http://localhost:8000/docs
 - From a phone on the same Wi-Fi: `http://<your-laptop-ip>:8000`
 
-## Deploy the backend (Render, free)
-
-A hosted backend works from any network (campus Wi-Fi, mobile data, the hackathon venue) and doesn't need your laptop running. `render.yaml` holds the settings.
-
-1. Sign in at https://render.com with GitHub.
-2. **New → Blueprint**, pick this repo and the branch that has `render.yaml` (`main` once the PR is merged).
-3. When asked for `ROBOFLOW_API_KEY`, paste your Roboflow key. It's stored in Render, never in git.
-4. Wait for the deploy, then open `https://<your-service>.onrender.com/health`. It should show `{"ok":true}`.
-5. Put that URL in `mobile/.env` as `EXPO_PUBLIC_API_URL` (see [mobile/README.md](mobile/README.md)).
-
-The free tier sleeps after 15 minutes without requests, and the next request takes up to a minute while it wakes. The app pings the server when it opens to hide most of that. Before a demo, open `/health` in a browser to wake it.
-
 Test the model from the command line:
 
 ```bash
 python backend/main.py path/to/photo.jpg
 ```
 
-## Mobile app
+## Deploy (Render, free)
 
-See [mobile/README.md](mobile/README.md) for setup and the API contract.
+`render.yaml` deploys two services from `main`:
+
+| Service | What it is | URL |
+|---|---|---|
+| `waste-sorter-api` | The backend API | https://waste-sorter-api.onrender.com |
+| `waste-sorter-web` | The web version of the app: open it in any phone browser, no Expo Go or sign-in needed | `https://waste-sorter-web.onrender.com` (check the Render dashboard for the exact URL) |
+
+Both work from any network (campus Wi-Fi, mobile data, the hackathon venue) and don't need a laptop running.
+
+First-time setup:
+1. Sign in at https://render.com with GitHub.
+2. **New → Blueprint**, pick this repo and the `main` branch. If the Blueprint already exists, Render picks up new services from `render.yaml` on its next sync.
+3. When asked for `ROBOFLOW_API_KEY`, paste your Roboflow key. It's stored in Render, never in git.
+4. Check `https://waste-sorter-api.onrender.com/health` shows `{"ok":true}`, then open the web app's URL on your phone.
+
+Every merge to `main` redeploys both.
+
+The website has the API's URL built in, through `EXPO_PUBLIC_API_URL` in `render.yaml`. If the API's URL ever changes, update it there.
+
+The free API sleeps after 15 minutes without requests, and the next request takes up to a minute while it wakes. The app pings it on open to hide most of that. **Before a demo, open `/health` in a browser to wake it.**
+
+## App
+
+Two ways to use it:
+- **Web (easiest, for teammates and judges):** open the `waste-sorter-web` URL on a phone and allow the camera. Turn the URL into a QR code for your slides.
+- **Expo Go (for development):** see [mobile/README.md](mobile/README.md). Each teammate signs in with their own Expo account.
+
+See [mobile/README.md](mobile/README.md) for code layout and the API contract.

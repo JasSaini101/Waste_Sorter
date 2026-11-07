@@ -1,21 +1,24 @@
 # Mobile app (Expo / React Native)
 
-## Run it on your phone (works on any network)
+**Just want to use the app?** Open the deployed website (`waste-sorter-web` on Render, see the main README) on your phone. No Expo Go or sign-in needed. The steps below are for developing the app.
+
+## Run it on your phone with Expo Go (works on any network)
 
 Use this on campus Wi-Fi, eduroam or at the hackathon venue, where devices usually can't reach each other directly.
 
+**Sign-in:** Expo Go only opens a dev server run by the same Expo account. Each teammate signs in with **their own** Expo account, on their own laptop (`npx expo login`) and in Expo Go on their phone, and runs their own copy. On Windows, browser sign-in can crash; use `npx expo login --username <you>` instead.
+
 1. Install **Expo Go** from the App Store or Google Play.
-2. Deploy the backend to Render (see the main README) and check `https://<your-service>.onrender.com/health` works.
-3. Copy `.env.example` to `.env` and set the backend address:
+2. Copy `.env.example` to `.env` and set the backend address:
    ```
-   EXPO_PUBLIC_API_URL=https://<your-service>.onrender.com
+   EXPO_PUBLIC_API_URL=https://waste-sorter-api.onrender.com
    ```
-4. Install and start with a tunnel:
+3. Install and start with a tunnel:
    ```bash
    npm install
    npm run tunnel
    ```
-5. Scan the QR code with your phone camera (iPhone) or Expo Go (Android). Your phone can be on any network, even mobile data.
+4. Scan the QR code with your phone camera (iPhone) or Expo Go (Android). Your phone can be on any network, even mobile data.
 
 The tunnel sends the app's code through Expo's tunnel service, so loading is slower than on local Wi-Fi. Restart after changing `.env`.
 
@@ -37,7 +40,12 @@ If you get timeouts, open `http://<laptop-ip>:8000/health` in the phone's browse
 - `screens/ResultScreen.tsx`: full-screen card coloured by bin, with the tip and exceptions. Shows "Probably X?" when confidence is low.
 - `screens/LookupScreen.tsx`: searchable list from `GET /rules`, for when the camera can't identify something.
 
-Photo upload uses React Native's `FormData` file format, so scanning works on phones only. The web build (`npm run web`) is useful for checking layout and the lookup screen.
+The same code runs as a website: `scan()` in `api.ts` uploads the photo as a browser `Blob` on web and as a React Native file on phones. Try the web version locally with `npm run web`. Browsers only allow the camera on `https://` pages or `localhost`.
+
+Build the website the way Render does:
+```bash
+npx expo export --platform web   # output in dist/
+```
 
 ## API contract
 
