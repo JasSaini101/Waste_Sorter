@@ -20,6 +20,7 @@ const BIN_ICONS: Record<string, string> = {
   recycle: "♻️",
   compost: "🌱",
   donate: "👕",
+  ewaste: "🔋",
   trash: "🗑️",
   unknown: "❓",
 };
