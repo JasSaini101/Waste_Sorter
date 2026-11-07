@@ -4,7 +4,7 @@ import { Platform } from "react-native";
 
 export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
-export type BinKey = "recycle" | "compost" | "donate" | "trash" | "unknown";
+export type BinKey = "recycle" | "compost" | "donate" | "ewaste" | "trash" | "unknown";
 
 export type Rule = {
   key: string | null;
@@ -25,7 +25,8 @@ export type ScanResult = {
   box: Box | null;
   image_size: { width: number; height: number };
   rule: Rule;
-  detections: { label: string; confidence: number; box: Box | null }[];
+  // label is the rule key (e.g. "BATTERY"); name is what the model saw (e.g. "AA Battery").
+  detections: { label: string; name: string | null; confidence: number; box: Box | null }[];
 };
 
 // Render's free tier sleeps after 15 idle minutes and takes up to a minute to wake.

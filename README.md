@@ -7,10 +7,21 @@ Point your phone camera at something you're about to throw away, and the app tel
 
 ```
 Phone app (mobile/)  --photo-->  Backend API (backend/)  --image-->  Roboflow model
-                     <--JSON---  maps material -> bin    <--boxes--  garbage-classification-3/2
+                     <--JSON---  picks the answer,   <--boxes--  3 models, in parallel
+                                 maps it -> bin
 ```
 
-The model detects 7 materials: plastic, glass, metal, paper, cardboard, biodegradable and cloth. `backend/disposal_rules.py` turns each one into a bin plus instructions.
+The backend runs three Roboflow models on every photo, at the same time:
+
+| Model | Detects |
+|---|---|
+| `garbage-classification-3/2` | 7 materials: plastic, glass, metal, paper, cardboard, biodegradable, cloth |
+| `yolov8n-640` (stock COCO) | Electronics: phones, laptops, keyboards, mice, remotes, TVs, small appliances |
+| [`battery-detection-and-counts/1`](https://universe.roboflow.com/mrkhai/battery-detection-and-counts) | AA, AAA, 9V, coin and 18650 batteries |
+
+The material model alone would call a phone "metal" and a battery "paper" and say "Recycle", which is dangerous: batteries start fires in recycling trucks. So electronics and batteries override the material result and go to **E-waste drop-off**. The battery model also mistakes cans and boxes for batteries, so a battery only wins when it's more confident than the material model. The thresholds are at the top of `backend/classifier.py`.
+
+`backend/disposal_rules.py` turns the answer into a bin plus instructions.
 
 The phone never talks to Roboflow directly, so the API key stays on the server.
 

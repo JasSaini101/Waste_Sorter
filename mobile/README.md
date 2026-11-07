@@ -80,14 +80,15 @@ Response:
     "tip": "Cans and clean foil. Empty and rinse.",
     "exceptions": ["Aerosol cans: only if completely empty.", "..."]
   },
-  "detections": [{ "label": "METAL", "confidence": 0.71, "box": [137, 91, 120, 150] }]
+  "detections": [{ "label": "METAL", "name": "METAL", "confidence": 0.71, "box": [137, 91, 120, 150] }]
 }
 ```
 
 - `found: false`: nothing detected; `rule.bin` is `"unknown"`. Offer a retry and the manual lookup.
 - `confident: false`: confidence under 50%; show "Probably {item}?" and let the user confirm.
 - `box` is `[center_x, center_y, width, height]` in pixels of `image_size`.
-- `bin` is one of `recycle`, `compost`, `donate`, `trash`, `unknown`.
+- `bin` is one of `recycle`, `compost`, `donate`, `ewaste`, `trash`, `unknown`.
+- `detections[].label` is the rule key (`METAL`, `ELECTRONICS`, `BATTERY`...); `name` is what the model saw (`cell phone`, `AA Battery`...).
 
 ### `GET /rules`
 

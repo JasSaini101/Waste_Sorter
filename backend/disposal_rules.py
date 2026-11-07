@@ -1,9 +1,10 @@
-"""How to dispose of each class the model can detect.
+"""How to dispose of each class the models can detect.
 
-The model (garbage-classification-3/2) only knows these 7 material classes:
+The material model (garbage-classification-3/2) knows 7 classes:
 PLASTIC, GLASS, METAL, PAPER, CARDBOARD, BIODEGRADABLE, CLOTH.
-It has no "trash" or "hazardous" class, so items like chip bags or batteries
-will be forced into one of these or not detected at all.
+classifier.py adds ELECTRONICS and BATTERY from two extra models.
+There is still no "trash" class, so items like chip bags get forced into
+one of these or aren't detected at all.
 
 These are general US curbside guidelines. Recycling rules vary by
 city, so check them against your local program before the demo.
@@ -16,6 +17,7 @@ BINS = {
     "recycle": {"label": "Recycle", "color": "#2E7DD7"},
     "compost": {"label": "Compost", "color": "#3A9D4F"},
     "donate": {"label": "Donate / Textile drop-off", "color": "#8E5BD0"},
+    "ewaste": {"label": "E-waste drop-off", "color": "#E8772E"},
     "trash": {"label": "Trash", "color": "#6B7280"},
     "unknown": {"label": "Not sure", "color": "#D9A21B"},
 }
@@ -54,7 +56,7 @@ RULES: dict[str, Rule] = {
         tip="Cans and clean foil. Empty and rinse.",
         exceptions=[
             "Aerosol cans: only if completely empty.",
-            "Batteries and electronics: never in the bin. Use a drop-off point.",
+            "Batteries and electronics: never in the bin. Use an e-waste drop-off.",
         ],
     ),
     "PAPER": Rule(
@@ -83,6 +85,26 @@ RULES: dict[str, Rule] = {
         bin="donate",
         tip="Donate if it's wearable, otherwise use a textile recycling drop-off.",
         exceptions=["Don't put textiles in the curbside recycling bin."],
+    ),
+    "ELECTRONICS": Rule(
+        item="Electronics",
+        bin="ewaste",
+        tip="Never put it in the trash or recycling. Take it to an e-waste drop-off "
+        "or a store take-back program, and wipe your personal data first.",
+        exceptions=[
+            "Still works? Donate it or sell it.",
+            "Remove loose batteries and drop them off separately.",
+        ],
+    ),
+    "BATTERY": Rule(
+        item="Battery",
+        bin="ewaste",
+        tip="Never in the trash or recycling: batteries can start fires in garbage trucks. "
+        "Tape the ends and take them to a battery drop-off (many hardware and electronics stores have one).",
+        exceptions=[
+            "Swollen or damaged lithium batteries: store in a cool place and drop off soon.",
+            "Car batteries: return to an auto parts store.",
+        ],
     ),
 }
 

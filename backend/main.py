@@ -1,4 +1,4 @@
-"""Waste Sorter CLI: classify an image of waste.
+"""Waste Sorter CLI: classify an image of waste (all three models).
 
 Usage:
     python main.py path/to/image.jpg
@@ -16,7 +16,7 @@ from classifier import classify
 def main() -> int:
     parser = argparse.ArgumentParser(description="Classify waste in an image.")
     parser.add_argument("image", help="Local image path or image URL")
-    parser.add_argument("--json", action="store_true", help="Print raw JSON response")
+    parser.add_argument("--json", action="store_true", help="Print each model's raw JSON response")
     args = parser.parse_args()
 
     result = classify(args.image)
@@ -29,13 +29,13 @@ def main() -> int:
         print("No waste detected in image.")
         return 0
 
-    print(f"Top: {result.top.label} ({result.top.confidence:.1%})")
+    print(f"Top: {result.top.label} / {result.top.name} ({result.top.confidence:.1%})")
     for p in result.predictions:
         box = ""
         if p.box:
             x, y, w, h = p.box
             box = f"  at ({x:.0f}, {y:.0f}) size {w:.0f}x{h:.0f}"
-        print(f"  {p.label:<20} {p.confidence:.1%}{box}")
+        print(f"  {p.label:<14} {p.name or '':<18} {p.confidence:.1%}{box}")
     return 0
 
 

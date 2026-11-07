@@ -106,7 +106,7 @@ def scan(image: UploadFile = File(...)) -> dict:
         "rule": rule_to_dict(top.label.upper() if top else None, rule),
         # Everything detected, most confident first, for drawing boxes or a "Did you mean" list.
         "detections": [
-            {"label": p.label, "confidence": p.confidence, "box": p.box}
+            {"label": p.label, "name": p.name, "confidence": p.confidence, "box": p.box}
             for p in result.predictions
         ],
     }
