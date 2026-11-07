@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 from inference_sdk import InferenceConfiguration, InferenceHTTPClient
+from PIL import Image
 
 MODEL_ID = "garbage-classification-3/2"
 API_URL = "https://serverless.roboflow.com"
@@ -41,8 +42,8 @@ def _get_client() -> InferenceHTTPClient:
 _client: InferenceHTTPClient | None = None
 
 
-def classify(image: str) -> ClassificationResult:
-    """Classify an image given a local file path or an image URL."""
+def classify(image: "str | Image.Image") -> ClassificationResult:
+    """Detect waste in an image: a local file path, an image URL, or a PIL image."""
     global _client
     if _client is None:
         _client = _get_client()
