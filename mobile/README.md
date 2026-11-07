@@ -1,20 +1,33 @@
 # Mobile app (Expo / React Native)
 
-Not built yet. To start:
+## Run it on your phone
 
-```bash
-npx create-expo-app@latest . --template blank
-npx expo install expo-camera expo-image-manipulator
-npx expo start   # scan the QR code with the Expo Go app
-```
+1. Install **Expo Go** from the App Store or Google Play.
+2. Start the backend (see the main README) with `--host 0.0.0.0`.
+3. Set the backend address. Copy `.env.example` to `.env` and put your laptop's Wi-Fi IP in it (`ipconfig` on Windows):
+   ```
+   EXPO_PUBLIC_API_URL=http://192.168.x.x:8000
+   ```
+4. Install and start:
+   ```bash
+   npm install
+   npx expo start
+   ```
+5. Scan the QR code with your phone camera (iPhone) or Expo Go (Android). Phone and laptop must be on the same Wi-Fi.
 
-## Screens
+If the app says it can't reach the server, open `http://<laptop-ip>:8000/health` in the phone's browser. If that fails too, allow Python through Windows Firewall on private networks.
 
-1. **Scan**: full-screen camera with a shutter button.
-2. **Result**: card colored by `rule.color`, showing `rule.item`, `rule.bin_label`, `rule.tip` and `rule.exceptions`.
-3. **Manual lookup**: list from `GET /rules`, for when the camera can't identify something.
+Restart `npx expo start` after changing `.env`.
 
-Resize photos to about 640px wide (`expo-image-manipulator`) before uploading. The model works at 416x416, so bigger images only slow the upload.
+## Code layout
+
+- `App.tsx`: switches between the three screens (a simple state machine, no navigation library).
+- `api.ts`: `scan(photoUri)` and `getRules()`, plus types matching the backend's JSON.
+- `screens/ScanScreen.tsx`: camera and shutter button. Shrinks each photo to 640px wide before uploading; the model works at 416x416, so bigger images only slow the upload.
+- `screens/ResultScreen.tsx`: full-screen card coloured by bin, with the tip and exceptions. Shows "Probably X?" when confidence is low.
+- `screens/LookupScreen.tsx`: searchable list from `GET /rules`, for when the camera can't identify something.
+
+Photo upload uses React Native's `FormData` file format, so scanning works on phones only. The web build (`npm run web`) is useful for checking layout and the lookup screen.
 
 ## API contract
 
