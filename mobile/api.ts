@@ -1,5 +1,7 @@
 // Client for the Waste Sorter backend. Response shapes match backend/app.py.
 
+import { Platform } from "react-native";
+
 export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 export type BinKey = "recycle" | "compost" | "donate" | "trash" | "unknown";
@@ -51,11 +53,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Upload a local photo (file URI) and get disposal advice. */
-export function scan(photoUri: string): Promise<ScanResult> {
+/** Upload a photo (file, blob or data URI) and get disposal advice. */
+export async function scan(photoUri: string): Promise<ScanResult> {
   const form = new FormData();
-  // React Native's FormData accepts a {uri, name, type} object for files.
-  form.append("image", { uri: photoUri, name: "scan.jpg", type: "image/jpeg" } as any);
+  if (Platform.OS === "web") {
+    // Browsers need the actual image data; photoUri is a blob: or data: URL there.
+    const blob = await (await fetch(photoUri)).blob();
+    form.append("image", blob, "scan.jpg");
+  } else {
+    // React Native's FormData accepts a {uri, name, type} object for files.
+    form.append("image", { uri: photoUri, name: "scan.jpg", type: "image/jpeg" } as any);
+  }
   return request<ScanResult>("/scan", { method: "POST", body: form });
 }
 
