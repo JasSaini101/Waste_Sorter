@@ -1,13 +1,15 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Rule } from "../api";
+import { Nearby, Rule } from "../api";
+import NearbySpots from "../components/NearbySpots";
 
 export type ResultInfo = {
   rule: Rule;
   found: boolean; // false = the model detected nothing
   confident: boolean;
   confidence: number | null; // null when picked from manual lookup
+  nearby?: Nearby | null; // Drop-off spots from the scan; fetched on screen when missing
 };
 
 type Props = {
@@ -55,6 +57,8 @@ export default function ResultScreen({ result, onScanAgain, onLookup }: Props) {
             </>
           )}
         </View>
+
+        {found && <NearbySpots rule={rule} initial={result.nearby} />}
 
         {found && !confident && (
           <Text style={styles.unsure}>Not right? Look it up to pick the correct item.</Text>

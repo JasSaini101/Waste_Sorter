@@ -28,6 +28,12 @@
           "cameraPermission": "Waste Sorter uses the camera to identify what you're throwing away.",
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Waste Sorter uses your location to show the nearest drop-off spots for electronics, batteries and clothes."
+        }
       ]
     ]
   }

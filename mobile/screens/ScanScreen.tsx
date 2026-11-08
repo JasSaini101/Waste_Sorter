@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { scan, ScanResult } from "../api";
+import { currentCoords } from "../location";
 
 type Props = {
   onResult: (result: ScanResult) => void;
@@ -43,11 +44,13 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
     // If the server was asleep the first scan can take a while; say so instead of looking frozen.
     const slowTimer = setTimeout(() => setSlow(true), 6000);
     try {
+      // Location only if already allowed: the prompt comes later, and only for items that need a drop-off.
+      const coords = currentCoords(false);
       const photo = await camera.current.takePictureAsync({ quality: 0.8, shutterSound: false });
       // The model works at 416x416, so a 640px-wide JPEG uploads fast without losing accuracy.
       const resized = await ImageManipulator.manipulate(photo.uri).resize({ width: 640 }).renderAsync();
       const saved = await resized.saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
-      onResult(await scan(saved.uri));
+      onResult(await scan(saved.uri, await coords));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
     } finally {
