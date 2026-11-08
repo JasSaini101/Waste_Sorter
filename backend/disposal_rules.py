@@ -29,6 +29,8 @@ class Rule:
     bin: str  # Key into BINS
     tip: str  # Main instruction
     exceptions: list[str]  # Common things in this category that DON'T go in this bin
+    # Google Maps search for the nearest drop-off spot, for items that don't go in a home bin
+    dropoff: str | None = None
 
 
 RULES: dict[str, Rule] = {
@@ -85,6 +87,7 @@ RULES: dict[str, Rule] = {
         bin="donate",
         tip="Donate if it's wearable, otherwise use a textile recycling drop-off.",
         exceptions=["Don't put textiles in the curbside recycling bin."],
+        dropoff="clothing donation",
     ),
     "ELECTRONICS": Rule(
         item="Electronics",
@@ -95,6 +98,7 @@ RULES: dict[str, Rule] = {
             "Still works? Donate it or sell it.",
             "Remove loose batteries and drop them off separately.",
         ],
+        dropoff="electronics recycling",
     ),
     "BATTERY": Rule(
         item="Battery",
@@ -105,6 +109,7 @@ RULES: dict[str, Rule] = {
             "Swollen or damaged lithium batteries: store in a cool place and drop off soon.",
             "Car batteries: return to an auto parts store.",
         ],
+        dropoff="battery recycling",
     ),
 }
 

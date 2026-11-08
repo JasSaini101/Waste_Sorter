@@ -49,6 +49,20 @@ Test the model from the command line:
 python backend/main.py path/to/photo.jpg
 ```
 
+### Nearest drop-off spots (optional Google key)
+
+For electronics, batteries and clothes, the result screen asks for the user's location and lists the 3 closest drop-off spots, using the Google Places API.
+- If the user says no, the server sends back a note asking them to enable location.
+- Without a key, the app shows a Google Maps search link instead of the list.
+
+To turn the list on:
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and turn on billing. A hackathon's usage stays within Google's free monthly allowance.
+2. Enable **Places API (New)**, then create an API key under **APIs & Services → Credentials**.
+3. Restrict the key to Places API (New).
+4. Put it in `backend/.env` as `GOOGLE_MAPS_API_KEY=...`, and add the same variable in Render (`waste-sorter-api` → **Environment**).
+
+The key stays on the server and is sent to Google in a header. The user's location is rounded to about 1 km before it's sent to Google, and it isn't stored or logged.
+
 ## Deploy (Render, free)
 
 `render.yaml` deploys two services from `main`:

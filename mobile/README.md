@@ -35,9 +35,11 @@ If you get timeouts, open `http://<laptop-ip>:8000/health` in the phone's browse
 ## Code layout
 
 - `App.tsx`: switches between the three screens (a simple state machine, no navigation library).
-- `api.ts`: `scan(photoUri)`, `getRules()` and `warmUp()` (wakes a sleeping Render server when the app opens), plus types matching the backend's JSON.
+- `api.ts`: `scan(photoUri, coords)`, `getNearby()`, `getRules()` and `warmUp()` (wakes a sleeping Render server when the app opens), plus types matching the backend's JSON.
 - `screens/ScanScreen.tsx`: camera and shutter button. Shrinks each photo to 640px wide before uploading; the model works at 416x416, so bigger images only slow the upload.
 - `screens/ResultScreen.tsx`: full-screen card coloured by bin, with the tip and exceptions. Shows "Probably X?" when confidence is low.
+- `components/NearbySpots.tsx`: "Nearest drop-off spots" card on the result screen for e-waste, batteries and clothes. Asks for location the first time it's needed.
+- `location.ts`: `currentCoords(ask)` wraps `expo-location`; works on web through the browser's location prompt.
 - `screens/LookupScreen.tsx`: searchable list from `GET /rules`, for when the camera can't identify something.
 
 The same code runs as a website: `scan()` in `api.ts` uploads the photo as a browser `Blob` on web and as a React Native file on phones. Try the web version locally with `npm run web`. Browsers only allow the camera on `https://` pages or `localhost`.
@@ -53,7 +55,7 @@ Base URL: the deployed Render URL, or your laptop's Wi-Fi IP during development 
 
 ### `POST /scan`
 
-Multipart form with one field, `image` (JPEG or PNG).
+Multipart form with the field `image` (JPEG or PNG), plus optional `lat` and `lon`. Send them only if the user already allowed location access.
 
 ```ts
 const form = new FormData();
@@ -78,8 +80,10 @@ Response:
     "bin_label": "Recycle",
     "color": "#2E7DD7",
     "tip": "Cans and clean foil. Empty and rinse.",
-    "exceptions": ["Aerosol cans: only if completely empty.", "..."]
+    "exceptions": ["Aerosol cans: only if completely empty.", "..."],
+    "dropoff": null
   },
+  "nearby": null,
   "detections": [{ "label": "METAL", "name": "METAL", "confidence": 0.71, "box": [137, 91, 120, 150] }]
 }
 ```
@@ -89,6 +93,25 @@ Response:
 - `box` is `[center_x, center_y, width, height]` in pixels of `image_size`.
 - `bin` is one of `recycle`, `compost`, `donate`, `ewaste`, `trash`, `unknown`.
 - `detections[].label` is the rule key (`METAL`, `ELECTRONICS`, `BATTERY`...); `name` is what the model saw (`cell phone`, `AA Battery`...).
+
+- `rule.dropoff` is a Google Maps search phrase (e.g. `"battery recycling"`) for items that need a drop-off spot (`ELECTRONICS`, `BATTERY`, `CLOTH`), otherwise `null`.
+- `nearby` is `null` unless `rule.dropoff` is set. Then it's:
+
+```json
+{
+  "query": "battery recycling",
+  "places": [{ "name": "Battery Drop-off", "address": "123 Main St", "distance_miles": 1.2, "maps_url": "https://maps.google.com/?cid=..." }],
+  "search_url": "https://www.google.com/maps/search/?api=1&query=battery+recycling",
+  "needs_location": false,
+  "note": null
+}
+```
+
+  When `places` is empty, `note` says why. With no `lat`/`lon`, `needs_location` is `true` and `note` is "Enable location permission if you want to see the closest locations near you for this."
+
+### `POST /nearby`
+
+JSON `{ "key": "BATTERY", "lat": 38.37, "lon": -75.6 }` (lat/lon may be `null`). Returns the `nearby` object above, or `null` for items that go in a home bin. Used after the user allows location, and for items picked on the lookup screen. It's a POST so the location stays out of URLs and server logs.
 
 ### `GET /rules`
 

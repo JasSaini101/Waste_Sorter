@@ -14,7 +14,25 @@ export type Rule = {
   color: string;
   tip: string;
   exceptions: string[];
+  dropoff: string | null; // Set for items that need a drop-off spot (e-waste, batteries, clothes)
 };
+
+export type Place = {
+  name: string;
+  address: string;
+  distance_miles: number;
+  maps_url: string | null;
+};
+
+export type Nearby = {
+  query: string;
+  places: Place[]; // Closest first
+  search_url: string; // Google Maps search, always available
+  needs_location: boolean; // true = no location was sent
+  note: string | null; // Why `places` is empty, if it is
+};
+
+export type Coords = { lat: number; lon: number };
 
 export type Box = [number, number, number, number]; // center x, center y, width, height
 
@@ -25,6 +43,7 @@ export type ScanResult = {
   box: Box | null;
   image_size: { width: number; height: number };
   rule: Rule;
+  nearby: Nearby | null; // null when the item goes in a home bin
   // label is the rule key (e.g. "BATTERY"); name is what the model saw (e.g. "AA Battery").
   detections: { label: string; name: string | null; confidence: number; box: Box | null }[];
 };
@@ -55,8 +74,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 /** Upload a photo (file, blob or data URI) and get disposal advice. */
-export async function scan(photoUri: string): Promise<ScanResult> {
+export async function scan(photoUri: string, coords: Coords | null = null): Promise<ScanResult> {
   const form = new FormData();
+  if (coords) {
+    form.append("lat", String(coords.lat));
+    form.append("lon", String(coords.lon));
+  }
   if (Platform.OS === "web") {
     // Browsers need the actual image data; photoUri is a blob: or data: URL there.
     const blob = await (await fetch(photoUri)).blob();
@@ -66,6 +89,15 @@ export async function scan(photoUri: string): Promise<ScanResult> {
     form.append("image", { uri: photoUri, name: "scan.jpg", type: "image/jpeg" } as any);
   }
   return request<ScanResult>("/scan", { method: "POST", body: form });
+}
+
+/** Drop-off spots for a rule. Without coords, the server returns a note asking for location. */
+export function getNearby(key: string, coords: Coords | null): Promise<Nearby | null> {
+  return request<Nearby | null>("/nearby", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, lat: coords?.lat ?? null, lon: coords?.lon ?? null }),
+  });
 }
 
 export function getRules(): Promise<Rule[]> {
