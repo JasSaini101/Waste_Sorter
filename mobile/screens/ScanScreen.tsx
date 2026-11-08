@@ -58,7 +58,7 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
       <CameraView ref={camera} style={styles.fill} facing="back" />
 
       <View style={[styles.top, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.hint}>Point at one item to dispose of and tap the button</Text>
+        <Text style={styles.hint}>Take a picture of the item to dispose of</Text>
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
