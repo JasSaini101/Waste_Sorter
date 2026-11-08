@@ -1,11 +1,14 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
-import { useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { scan, ScanResult } from "../api";
 import { currentCoords } from "../location";
+
+const CAMERA_CONSENT_KEY = "camera-consent";
 
 type Props = {
   onResult: (result: ScanResult) => void;
@@ -16,6 +19,7 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [consentLoaded, setConsentLoaded] = useState(false);
   const [requestingPermission, setRequestingPermission] = useState(false);
   const [hover, setHover] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -23,21 +27,65 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
   const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem(CAMERA_CONSENT_KEY)
+      .then((consent) => {
+        if (!active) return;
+        if (consent === "granted") setCameraReady(true);
+        setConsentLoaded(true);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : "Couldn't load your saved camera choice.");
+        setConsentLoaded(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!permission?.granted) return;
+    setCameraReady(true);
+    AsyncStorage.setItem(CAMERA_CONSENT_KEY, "granted").catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : "Couldn't save your camera choice.");
+    });
+  }, [permission?.granted]);
+
+  async function getCameraAccess() {
+    if (permission && !permission.granted && !permission.canAskAgain) {
+      throw new Error("Camera access is disabled. You can enable it in your device settings.");
+    }
+
+    const currentPermission = permission?.granted ? permission : await requestPermission();
+    if (!currentPermission.granted) {
+      throw new Error("Camera access is needed to scan an item. You can allow it in your browser or device settings.");
+    }
+
+    setCameraReady(true);
+    await AsyncStorage.setItem(CAMERA_CONSENT_KEY, "granted");
+  }
+
   async function openCamera() {
     setRequestingPermission(true);
     setError(null);
     try {
-      const currentPermission = permission?.granted ? permission : await requestPermission();
-      if (currentPermission.granted) {
-        setCameraReady(true);
-      } else {
-        setError("Camera access is needed to scan an item. You can allow it in your browser or device settings.");
-      }
+      await getCameraAccess();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't request camera access. Please try again.");
     } finally {
       setRequestingPermission(false);
     }
+  }
+
+  if (!cameraReady && !consentLoaded) {
+    return (
+      <View style={styles.introScreen}>
+        <ActivityIndicator color="#286B42" />
+      </View>
+    );
   }
 
   if (!cameraReady) {
