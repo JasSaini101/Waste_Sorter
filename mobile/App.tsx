@@ -6,7 +6,7 @@ import { warmUp } from "./api";
 import LookupScreen from "./screens/LookupScreen";
 import ResultScreen, { ResultInfo } from "./screens/ResultScreen";
 import ScanScreen from "./screens/ScanScreen";
-import WelcomeScreen from "./screens/WelcomeScreen";
+import AboutScreen from "./screens/AboutScreen";
 
 // A tiny state machine instead of a navigation library.
 type InfoReturnScreen = { name: "lookup" } | { name: "result"; result: ResultInfo };
@@ -68,7 +68,7 @@ export default function App() {
         />
       )}
       {screen.name === "info" && (
-        <WelcomeScreen onBack={() => setScreen(screen.returnTo)} />
+        <AboutScreen onBack={() => setScreen(screen.returnTo)} />
       )}
     </SafeAreaProvider>
   );

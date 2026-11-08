@@ -1,4 +1,5 @@
-"""How to dispose of each class the models can detect.
+"""
+How to dispose of each class the models can detect.
 
 The material model (garbage-classification-3/2) knows 7 classes:
 PLASTIC, GLASS, METAL, PAPER, CARDBOARD, BIODEGRADABLE, CLOTH.
@@ -6,8 +7,7 @@ classifier.py adds ELECTRONICS and BATTERY from two extra models.
 TRASH only comes from the Gemini second opinion (referee.py); the Roboflow
 models have no trash class.
 
-These are general US curbside guidelines. Recycling rules vary by
-city, so check them against your local program before the demo.
+These are general US curbside guidelines, but recycling rules vary by city.
 """
 
 from dataclasses import asdict, dataclass
@@ -37,19 +37,21 @@ RULES: dict[str, Rule] = {
     "PLASTIC": Rule(
         item="Plastic",
         bin="recycle",
-        tip="Empty and rinse it. Bottles, jugs and tubs are usually accepted.",
+        tip="Empty and rinse it beforehand. Bottles, jugs, and tubs are usually accepted.",
         exceptions=[
-            "Plastic bags and film: take to a store drop-off, not curbside.",
-            "Styrofoam and utensils: trash in most areas.",
+            "Plastic bags, wraps, and film: must be taken to a store drop-off, should not go in the bin.",
+            "Styrofoam, containers, and cups: check with your local program first. Some areas accept them, but most don't.",
+            "Utensils: goes in the trash, not the bin.",
         ],
     ),
     "GLASS": Rule(
         item="Glass",
         bin="recycle",
-        tip="Bottles and jars only. Empty and rinse, labels can stay on.",
+        tip="Typically all glass items. Empty and rinse first, labels can stay on.",
         exceptions=[
-            "Window glass, mirrors, drinking glasses and ceramics: trash.",
-            "Some areas don't take glass curbside. Check local rules.",
+            "Broken glass: too dangerous, goes in the trash.",
+            "Glass bottles: take bottle caps off and recycle separately.",
+            "Some areas don't take glass in bins, check local program.",
         ],
     ),
     "METAL": Rule(
@@ -57,30 +59,39 @@ RULES: dict[str, Rule] = {
         bin="recycle",
         tip="Cans and clean foil. Empty and rinse.",
         exceptions=[
+            "Don't crush cans, harder to sort at the recycling facility.",
             "Aerosol cans: only if completely empty.",
-            "Batteries and electronics: never in the bin. Use an e-waste drop-off.",
+            "Check with your local program for other metal items."
         ],
     ),
     "PAPER": Rule(
         item="Paper",
         bin="recycle",
-        tip="Keep it clean and dry. Mail, printer paper, magazines are fine.",
+        tip="Keep it clean and dry. Mail, printer paper, newspapers, and magazines are accepted.",
         exceptions=[
             "Napkins, paper towels, tissues: compost or trash.",
             "Paper cups and coated paper: usually trash.",
+            "Paperback books: donate if possible, otherwise recycle.",
+            "Waxed or laminated paper: too shiny to recycle, throw away.",
         ],
     ),
     "CARDBOARD": Rule(
         item="Cardboard",
         bin="recycle",
-        tip="Flatten boxes and keep them dry.",
-        exceptions=["Greasy pizza boxes: tear off the clean part, compost or trash the rest."],
+        tip="Flatten boxes before recycling.",
+        exceptions=[
+            "Greasy pizza boxes: remove all food scraps from box first.",
+            "Too contaminated or wet cardboard: can't be recycled, put in the trash.",
+        ],
     ),
     "BIODEGRADABLE": Rule(
         item="Food & organic waste",
         bin="compost",
         tip="Food scraps, peels, coffee grounds and yard waste.",
-        exceptions=["No compost program? Put it in the trash."],
+        exceptions=[
+            "Buy what you can eat and eat leftovers to reduce waste.",
+            "Find your local composting program, or start home-composting.",
+        ],
     ),
     "CLOTH": Rule(
         item="Clothing & fabric",
@@ -105,11 +116,12 @@ RULES: dict[str, Rule] = {
     "BATTERY": Rule(
         item="Battery",
         bin="ewaste",
-        tip="Never in the trash or recycling: batteries can start fires in garbage trucks. "
-        "Tape the ends and take them to a battery drop-off (many hardware and electronics stores have one).",
+        tip="Never in the trash or recycling: they require special handling. "
+        "Take them to a battery drop-off (many hardware and electronics stores have one).",
         exceptions=[
             "Swollen or damaged lithium batteries: store in a cool place and drop off soon.",
             "Car batteries: return to an auto parts store.",
+            "Lead-acid batteries: take to a hazardous waste drop-off or battery retailer.",
         ],
         dropoff="household battery recycling",
     ),
@@ -117,7 +129,10 @@ RULES: dict[str, Rule] = {
         item="Trash",
         bin="trash",
         tip="If it doesn't fit in the other categories, throw it away.",
-        exceptions=["Hazardous waste, batteries, electronics: use a drop-off point."],
+        exceptions=[
+            "Hazardous waste: use a drop-off point.",
+            "Large items: check with your local program for bulk pickup or drop-off.",
+        ],
     ),
 }
 
