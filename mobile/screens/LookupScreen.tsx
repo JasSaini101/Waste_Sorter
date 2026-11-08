@@ -9,8 +9,9 @@ const BIN_TINTS: Record<Rule["bin"], string> = {
   recycle: "#DCEBFA",
   compost: "#DDEEE0",
   donate: "#EAE1F4",
+  ewaste: "#FFE9D9",
   trash: "#E5E8EB",
-  unknown: "#F5EACD",
+  unknown: "#ffadad",
 };
 
 type Props = {

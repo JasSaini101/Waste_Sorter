@@ -17,9 +17,9 @@ BINS = {
     "recycle": {"label": "Recycle", "color": "#2E7DD7"},
     "compost": {"label": "Compost", "color": "#3A9D4F"},
     "donate": {"label": "Donate / Textile", "color": "#8E5BD0"},
-    "ewaste": {"label": "E-waste drop-off", "color": "#E8772E"},
+    "ewaste": {"label": "E-waste drop-off", "color": "#F5BE25"},
     "trash": {"label": "Trash", "color": "#6B7280"},
-    "unknown": {"label": "Not sure", "color": "#D9A21B"},
+    "unknown": {"label": "Not sure", "color": "#F02D2D"},
 }
 
 

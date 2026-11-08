@@ -95,6 +95,28 @@ export default function ItemIllustration({
             </View>
           </View>
         )}
+        {itemKey === "ELECTRONICS" && (
+          <View style={styles.electronics}>
+            <View style={styles.deviceFrame}>
+              <View style={styles.deviceScreen}>
+                <View style={styles.deviceLine} />
+                <View style={[styles.deviceLine, styles.deviceShortLine]} />
+                <View style={styles.deviceButton} />
+              </View>
+              <View style={styles.deviceSideButton} />
+            </View>
+          </View>
+        )}
+        {itemKey === "BATTERY" && (
+          <View style={styles.battery}>
+            <View style={styles.batteryCap} />
+            <View style={styles.batteryBody}>
+              <View style={styles.batteryPositive} />
+              <View style={styles.batteryNegative} />
+              <View style={styles.batteryShine} />
+            </View>
+          </View>
+        )}
         {!itemKey && <View style={styles.unknownShape} />}
       </View>
     </View>
@@ -317,5 +339,79 @@ const styles = StyleSheet.create({
     backgroundColor: "#8D9A91",
   },
   trashLine: { width: 2, height: 17, borderRadius: 1, backgroundColor: "#DCE5DB" },
+  electronics: { width: 36, height: 40, alignItems: "center", justifyContent: "center" },
+  deviceFrame: {
+    width: 25,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 6,
+    borderWidth: 3,
+    borderColor: "#607D82",
+    backgroundColor: "#8BA8A5",
+  },
+  deviceScreen: {
+    width: 17,
+    height: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    borderRadius: 2,
+    backgroundColor: "#DDF0E8",
+  },
+  deviceLine: { width: 10, height: 2, borderRadius: 1, backgroundColor: "#78A992" },
+  deviceShortLine: { width: 6 },
+  deviceButton: { width: 3, height: 3, borderRadius: 2, backgroundColor: "#4D7B72" },
+  deviceSideButton: {
+    position: "absolute",
+    right: -4,
+    top: 10,
+    width: 3,
+    height: 7,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
+    backgroundColor: "#607D82",
+  },
+  battery: { width: 26, height: 39, alignItems: "center", justifyContent: "flex-end" },
+  batteryCap: {
+    width: 10,
+    height: 4,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    backgroundColor: "#687C67",
+  },
+  batteryBody: {
+    width: 23,
+    height: 33,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 7,
+    backgroundColor: "#95A879",
+  },
+  batteryPositive: {
+    position: "absolute",
+    top: 10,
+    width: 9,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "#F5F8F0",
+  },
+  batteryNegative: {
+    position: "absolute",
+    top: 8,
+    width: 2,
+    height: 6,
+    borderRadius: 1,
+    backgroundColor: "#F5F8F0",
+  },
+  batteryShine: {
+    position: "absolute",
+    left: 4,
+    top: 7,
+    width: 3,
+    height: 19,
+    borderRadius: 2,
+    backgroundColor: "#DCE9C8",
+  },
   unknownShape: { width: 23, height: 23, borderRadius: 12, borderWidth: 4, borderColor: "#B68A36" },
 });
