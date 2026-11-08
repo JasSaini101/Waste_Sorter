@@ -31,21 +31,24 @@ export default function App() {
       {screen.name === "scan" && (
         <ScanScreen
           onLookup={goLookup}
-          onResult={(r) =>
+          onResult={(r) => {
             setScreen({
               name: "result",
               result: { rule: r.rule, found: r.found, confident: r.confident, confidence: r.confidence },
-            })
-          }
+            });
+          }}
         />
       )}
       {screen.name === "lookup" && (
         <LookupScreen
           onBack={goScan}
           onInfo={() => openInfo({ name: "lookup" })}
-          onPick={(rule) =>
-            setScreen({ name: "result", result: { rule, found: true, confident: true, confidence: null } })
-          }
+          onPick={(rule) => {
+            setScreen({
+              name: "result",
+              result: { rule, found: true, confident: true, confidence: null },
+            });
+          }}
         />
       )}
       {screen.name === "result" && (

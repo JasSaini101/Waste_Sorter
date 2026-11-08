@@ -19,34 +19,15 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!permission || permission.granted || permissionRequested.current) return;
     permissionRequested.current = true;
-    requestPermission().catch((e: unknown) => {
-      setPermissionError(e instanceof Error ? e.message : "Couldn't request camera access.");
-    });
+    requestPermission();
   }, [permission, requestPermission]);
 
   if (!permission) return <View style={styles.center} />;
-
-  // if (!permission.granted) {
-  //   return (
-  //     <View style={[styles.center, styles.padded]}>
-  //       <Text style={styles.title}>Camera access needed</Text>
-  //       <Text style={styles.body}>Waste Sorter uses the camera to identify what you're throwing away.</Text>
-  //       {permissionError && <Text style={styles.permissionError}>{permissionError}</Text>}
-  //       <Pressable style={styles.primary} onPress={requestPermission}>
-  //         <Text style={styles.primaryText}>Allow camera</Text>
-  //       </Pressable>
-  //       <Pressable onPress={onLookup}>
-  //         <Text style={styles.link}>Look it up instead</Text>
-  //       </Pressable>
-  //     </View>
-  //   );
-  // }
 
   async function capture() {
     if (!camera.current || busy) return;
@@ -104,7 +85,6 @@ const styles = StyleSheet.create({
   padded: { padding: 32, gap: 16 },
   title: { fontSize: 22, fontWeight: "700" },
   body: { fontSize: 16, textAlign: "center", color: "#444" },
-  permissionError: { color: "#B42318", fontSize: 14, textAlign: "center" },
   primary: { backgroundColor: "#2E7DD7", paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 },
   primaryText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   link: { color: "#2E7DD7", fontSize: 16, marginTop: 8 },

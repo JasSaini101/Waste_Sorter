@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 BINS = {
     "recycle": {"label": "Recycle", "color": "#2E7DD7"},
     "compost": {"label": "Compost", "color": "#3A9D4F"},
-    "donate": {"label": "Donate / Textile drop-off", "color": "#8E5BD0"},
+    "donate": {"label": "Donate / Textile", "color": "#8E5BD0"},
     "trash": {"label": "Trash", "color": "#6B7280"},
     "unknown": {"label": "Not sure", "color": "#D9A21B"},
 }
@@ -83,6 +83,12 @@ RULES: dict[str, Rule] = {
         bin="donate",
         tip="Donate if it's wearable, otherwise use a textile recycling drop-off.",
         exceptions=["Don't put textiles in the curbside recycling bin."],
+    ),
+    "TRASH": Rule(
+        item="Trash",
+        bin="trash",
+        tip="If it doesn't fit in the other categories, throw it away.",
+        exceptions=["Hazardous waste, batteries, electronics: use a drop-off point."],
     ),
 }
 
