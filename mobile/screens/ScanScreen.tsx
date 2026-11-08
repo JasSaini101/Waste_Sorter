@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,27 +15,20 @@ type Props = {
 export default function ScanScreen({ onResult, onLookup }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
+  const permissionRequested = useRef(false);
+  const [hover, setHover] = useState(false);
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
-  if (!permission) return <View style={styles.center} />;
+  useEffect(() => {
+    if (!permission || permission.granted || permissionRequested.current) return;
+    permissionRequested.current = true;
+    requestPermission();
+  }, [permission, requestPermission]);
 
-  if (!permission.granted) {
-    return (
-      <View style={[styles.center, styles.padded]}>
-        <Text style={styles.title}>Camera access needed</Text>
-        <Text style={styles.body}>Waste Sorter uses the camera to identify what you're throwing away.</Text>
-        <Pressable style={styles.primary} onPress={requestPermission}>
-          <Text style={styles.primaryText}>Allow camera</Text>
-        </Pressable>
-        <Pressable onPress={onLookup}>
-          <Text style={styles.link}>Look it up instead</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  if (!permission) return <View style={styles.center} />;
 
   async function capture() {
     if (!camera.current || busy) return;
@@ -65,22 +58,24 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
       <CameraView ref={camera} style={styles.fill} facing="back" />
 
       <View style={[styles.top, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.hint}>Point at one item and tap the button</Text>
+        <Text style={styles.hint}>Point at one item to dispose of and tap the button</Text>
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
         {error && <Text style={styles.error}>{error}</Text>}
         {slow && <Text style={styles.hint}>Waking up the server, this can take up to a minute…</Text>}
         <Pressable
-          style={[styles.shutter, busy && styles.shutterBusy]}
+          style={[styles.shutter, busy && styles.shutterBusy, hover && styles.shutterHover]}
           onPress={capture}
           disabled={busy}
           accessibilityLabel="Scan item"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
         >
-          {busy ? <ActivityIndicator color="#111" size="large" /> : <View style={styles.shutterInner} />}
+          {busy ? <ActivityIndicator color="#286B42" size="large" /> : <View style={styles.shutterInner} />}
         </Pressable>
         <Pressable onPress={onLookup} disabled={busy}>
-          <Text style={styles.lookup}>Can't scan it? Look it up</Text>
+          <Text style={styles.lookup}>Trouble scanning? Look it up here</Text>
         </Pressable>
       </View>
     </View>
@@ -98,12 +93,15 @@ const styles = StyleSheet.create({
   link: { color: "#2E7DD7", fontSize: 16, marginTop: 8 },
   top: { position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" },
   hint: {
-    color: "#fff",
+    borderRadius: 42,
+    borderWidth: 3,
+    borderColor: "#193B2A",
+    color: "#193B2A",
     fontSize: 15,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    fontWeight: "600",
+    backgroundColor: "rgba(245,248,240,0.94)",
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 20,
     overflow: "hidden",
   },
   bottom: { position: "absolute", bottom: 0, left: 0, right: 0, alignItems: "center", gap: 16 },
@@ -122,11 +120,32 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 42,
     borderWidth: 5,
-    borderColor: "#fff",
+    borderColor: "#F5F8F0",
     alignItems: "center",
     justifyContent: "center",
   },
-  shutterBusy: { backgroundColor: "rgba(255,255,255,0.8)" },
-  shutterInner: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#fff" },
-  lookup: { color: "#fff", fontSize: 15, textDecorationLine: "underline" },
+  shutterHover: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 5,
+    borderColor: "#357b58",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shutterBusy: { backgroundColor: "rgba(245,248,240,0.8)" },
+  shutterInner: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#DCEBD5" },
+  lookup: {
+    borderRadius: 42,
+    borderWidth: 3,
+    borderColor: "#193B2A",
+    color: "#193B2A",
+    fontSize: 15,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+    backgroundColor: "rgba(245,248,240,0.94)",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    overflow: "hidden",
+  },
 });

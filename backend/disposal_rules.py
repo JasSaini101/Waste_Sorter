@@ -16,10 +16,10 @@ from dataclasses import asdict, dataclass
 BINS = {
     "recycle": {"label": "Recycle", "color": "#2E7DD7"},
     "compost": {"label": "Compost", "color": "#3A9D4F"},
-    "donate": {"label": "Donate / Textile drop-off", "color": "#8E5BD0"},
-    "ewaste": {"label": "E-waste drop-off", "color": "#E8772E"},
+    "donate": {"label": "Donate / Textile", "color": "#8E5BD0"},
+    "ewaste": {"label": "E-waste drop-off", "color": "#F5BE25"},
     "trash": {"label": "Trash", "color": "#6B7280"},
-    "unknown": {"label": "Not sure", "color": "#D9A21B"},
+    "unknown": {"label": "Not sure", "color": "#F02D2D"},
 }
 
 
@@ -110,6 +110,12 @@ RULES: dict[str, Rule] = {
             "Car batteries: return to an auto parts store.",
         ],
         dropoff="battery recycling",
+    ),
+    "TRASH": Rule(
+        item="Trash",
+        bin="trash",
+        tip="If it doesn't fit in the other categories, throw it away.",
+        exceptions=["Hazardous waste, batteries, electronics: use a drop-off point."],
     ),
 }
 
