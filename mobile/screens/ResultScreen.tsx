@@ -14,6 +14,7 @@ type Props = {
   result: ResultInfo;
   onScanAgain: () => void;
   onLookup: () => void;
+  onInfo: () => void;
 };
 
 const BIN_ICONS: Record<string, string> = {
@@ -24,7 +25,7 @@ const BIN_ICONS: Record<string, string> = {
   unknown: "❓",
 };
 
-export default function ResultScreen({ result, onScanAgain, onLookup }: Props) {
+export default function ResultScreen({ result, onScanAgain, onLookup, onInfo }: Props) {
   const { rule, found, confident, confidence } = result;
   const insets = useSafeAreaInsets();
 
@@ -69,6 +70,9 @@ export default function ResultScreen({ result, onScanAgain, onLookup }: Props) {
             <Text style={styles.secondaryText}>Look it up</Text>
           </Pressable>
         )}
+        <Pressable onPress={onInfo}>
+          <Text style={styles.infoLink}>About WasteLess</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -104,4 +108,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secondaryText: { fontSize: 17, fontWeight: "600", color: "#fff" },
+  infoLink: { color: "#fff", fontSize: 14, fontWeight: "600", textAlign: "center", paddingVertical: 6 },
 });

@@ -7,9 +7,10 @@ import { getRules, Rule } from "../api";
 type Props = {
   onPick: (rule: Rule) => void;
   onBack: () => void;
+  onInfo: () => void;
 };
 
-export default function LookupScreen({ onPick, onBack }: Props) {
+export default function LookupScreen({ onPick, onBack, onInfo }: Props) {
   const [rules, setRules] = useState<Rule[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -40,7 +41,9 @@ export default function LookupScreen({ onPick, onBack }: Props) {
           <Text style={styles.back}>‹ Scan</Text>
         </Pressable>
         <Text style={styles.title}>Look it up</Text>
-        <View style={{ width: 60 }} />
+        <Pressable onPress={onInfo} hitSlop={12}>
+          <Text style={styles.about}>About</Text>
+        </Pressable>
       </View>
 
       <TextInput
@@ -88,6 +91,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16 },
   back: { color: "#2E7DD7", fontSize: 18, width: 60 },
   title: { fontSize: 20, fontWeight: "700" },
+  about: { color: "#2E7DD7", fontSize: 16, fontWeight: "600", width: 60, textAlign: "right" },
   search: {
     margin: 16,
     paddingHorizontal: 14,
