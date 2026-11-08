@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { scan, ScanResult } from "../api";
@@ -24,6 +24,8 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
   const [hover, setHover] = useState(false);
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);
+  // The photo just taken, shown in place of the live camera while it's being identified.
+  const [snapshot, setSnapshot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
@@ -140,6 +142,7 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
       // Location only if already allowed: the prompt comes later, and only for items that need a drop-off.
       const coords = currentCoords(false);
       const photo = await camera.current.takePictureAsync({ quality: 0.8, shutterSound: false });
+      setSnapshot(photo.uri);
       // The model works at 416x416, so a 640px-wide JPEG uploads fast without losing accuracy.
       const resized = await ImageManipulator.manipulate(photo.uri).resize({ width: 640 }).renderAsync();
       const saved = await resized.saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
@@ -150,15 +153,27 @@ export default function ScanScreen({ onResult, onLookup }: Props) {
       clearTimeout(slowTimer);
       setSlow(false);
       setBusy(false);
+      // Back to the live camera if the scan failed. On success this screen closes anyway.
+      setSnapshot(null);
     }
   }
 
   return (
     <View style={styles.fill}>
       <CameraView ref={camera} style={styles.fill} facing="back" />
+      {snapshot && (
+        <Image
+          source={{ uri: snapshot }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          accessibilityLabel="The photo you just took"
+        />
+      )}
 
       <View style={[styles.top, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.hint}>Take a picture of the item to dispose of</Text>
+        <Text style={styles.hint}>
+          {snapshot ? "Photo taken. Identifying the item…" : "Take a picture of the item to dispose of"}
+        </Text>
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
