@@ -52,8 +52,7 @@ def nearby(query: str, lat: float | None, lon: float | None) -> dict:
         result["note"] = NOTE_NO_LOCATION
         return result
 
-    load_dotenv()
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = _api_key()
     if not api_key:
         result["note"] = NOTE_NO_KEY
         return result
@@ -69,6 +68,17 @@ def nearby(query: str, lat: float | None, lon: float | None) -> dict:
     if not result["places"]:
         result["note"] = NOTE_NONE_FOUND
     return result
+
+
+def _api_key() -> str:
+    load_dotenv()
+    # Strip stray spaces or quotes from pasting it into a dashboard.
+    return os.environ.get("GOOGLE_MAPS_API_KEY", "").strip().strip('"').strip("'")
+
+
+def is_configured() -> bool:
+    """Whether a Google key is set (not whether it works). Shown on /health."""
+    return bool(_api_key())
 
 
 def _search(api_key: str, query: str, lat: float, lon: float) -> list[dict]:

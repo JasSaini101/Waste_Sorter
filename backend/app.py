@@ -19,7 +19,8 @@ from pydantic import BaseModel, Field
 
 from classifier import classify
 from disposal_rules import RULES, Rule, rule_for, rule_to_dict
-from places import nearby
+from places import is_configured as nearby_configured, nearby
+from referee import is_configured as second_opinion_configured
 
 # Below this, the app should say "Probably X" and let the user confirm.
 CONFIDENT_THRESHOLD = 0.5
@@ -64,7 +65,12 @@ def home() -> str:
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True}
+    # *_configured: false means GOOGLE_MAPS_API_KEY / GEMINI_API_KEY isn't set on this server.
+    return {
+        "ok": True,
+        "nearby_configured": nearby_configured(),
+        "second_opinion_configured": second_opinion_configured(),
+    }
 
 
 @app.get("/rules")
@@ -112,6 +118,8 @@ def scan(
     return {
         "found": top is not None,
         "confidence": top.confidence if top else None,
+        # Specific name from the Gemini second opinion, e.g. "clear plastic food container".
+        "item_name": top.name if top and "gemini" in result.raw else None,
         "confident": bool(top and top.confidence >= CONFIDENT_THRESHOLD),
         "box": top.box if top else None,
         "image_size": {"width": img.width, "height": img.height},

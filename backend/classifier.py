@@ -9,6 +9,9 @@ a phone "METAL" and a battery "PAPER", and the app would say "Recycle". Models 2
 and 3 catch those cases and override it with an e-waste result.
 
 All three run in parallel, so a scan takes about as long as a single call.
+
+With a GEMINI_API_KEY, referee.py also asks Google's Gemini vision model, and its answer
+wins (see SECOND_OPINION). On the test set that took right items from 58% to 99%.
 """
 
 import logging
@@ -19,6 +22,8 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 from inference_sdk import InferenceConfiguration, InferenceHTTPClient
 from PIL import Image
+
+import referee
 
 API_URL = "https://serverless.roboflow.com"
 
@@ -35,9 +40,22 @@ ELECTRONICS_CLASSES = {
 }
 # COCO electronics detections at or above this override the material model.
 ELECTRONICS_THRESHOLD = 0.45
+# What the models return at minimum, and what the material model needs to count.
+MODEL_MIN_CONFIDENCE = 0.1
+MATERIAL_THRESHOLD = 0.4
 # The battery model also fires on cans and boxes (cylinders and rectangles), so a battery
 # only wins if it clears this AND beats the material model's best score.
 BATTERY_THRESHOLD = 0.55
+
+# Ask Gemini when the best Roboflow answer is less confident than this...
+SECOND_OPINION_BELOW = 0.75
+# ...or when an e-waste detection at least this strong was rejected (a possible miss).
+SECOND_OPINION_EWASTE_HINT = 0.3
+# "always" (default): every scan, in parallel with Roboflow. Scored 99% right items vs 94%
+# for "unclear" on backend/eval, because Roboflow is sometimes confidently wrong.
+# "unclear": only unclear scans, after Roboflow (fewer Gemini calls). "off": never.
+SECOND_OPINION = os.environ.get("SECOND_OPINION", "always")
+EWASTE = {"ELECTRONICS", "BATTERY"}
 
 log = logging.getLogger(__name__)
 
@@ -68,7 +86,11 @@ def _get_client() -> InferenceHTTPClient:
         )
     return InferenceHTTPClient(api_url=API_URL, api_key=api_key).configure(
         # Send the key as an Authorization: Bearer header, never in the query string.
-        InferenceConfiguration(api_key_transport="header")
+        InferenceConfiguration(
+            api_key_transport="header",
+            # Get weak detections too; decide() applies its own per-model thresholds.
+            confidence_threshold=MODEL_MIN_CONFIDENCE,
+        )
     )
 
 
@@ -77,10 +99,61 @@ _pool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="roboflow")
 
 
 def classify(image: "str | Image.Image") -> ClassificationResult:
-    """Detect waste in an image: a local file path, an image URL, or a PIL image.
+    """Detect waste in an image: a local file path, an image URL, or a PIL image."""
+    is_url = isinstance(image, str) and image.startswith(("http://", "https://"))
+    use_referee = referee.is_configured() and not is_url and SECOND_OPINION != "off"
+    if use_referee and isinstance(image, str):
+        image = Image.open(image).convert("RGB")
 
-    Raises if the material model fails. If an e-waste model fails, its result is
-    skipped and the material result is used.
+    # In "always" mode Gemini runs alongside Roboflow, so a scan takes as long as the slower one.
+    early = _pool.submit(referee.ask, image.copy()) if use_referee and SECOND_OPINION == "always" else None
+
+    result = decide(infer_all(image))
+    if early is not None:
+        result = with_second_opinion(result, early.result())
+    elif use_referee and needs_second_opinion(result):
+        result = with_second_opinion(result, referee.ask(image))
+    return result
+
+
+def needs_second_opinion(result: "ClassificationResult") -> bool:
+    if SECOND_OPINION == "always":
+        return True
+    if SECOND_OPINION != "unclear":
+        return False
+    top = result.top
+    if top is None or top.confidence < SECOND_OPINION_BELOW:
+        return True
+    # E-waste overrides are where the cheap models go wrong most (mugs as batteries).
+    if top.label in EWASTE:
+        return True
+    # A rejected e-waste detection might be a real battery the material model outscored.
+    return any(
+        p.label in EWASTE and p.confidence >= SECOND_OPINION_EWASTE_HINT
+        for p in _ewaste_candidates(result.raw)
+    )
+
+
+def with_second_opinion(result: "ClassificationResult", verdict: dict | None) -> "ClassificationResult":
+    """Make Gemini's answer the top result. Keeps the Roboflow box if it agrees."""
+    if not verdict:
+        return result
+    label = verdict["category"]
+    if label == "UNKNOWN":
+        top = None
+    else:
+        box = next((p.box for p in result.predictions if p.label == label and p.box), None)
+        top = Prediction(label, verdict["confidence"], box, verdict.get("item"))
+    raw = {**result.raw, "gemini": verdict}
+    predictions = ([top] if top else []) + result.predictions
+    return ClassificationResult(top=top, predictions=predictions, raw=raw)
+
+
+def infer_all(image: "str | Image.Image") -> dict:
+    """Run all three models in parallel. Returns raw responses keyed by model ID.
+
+    Raises if the material model fails. If an e-waste model fails, its response is
+    left out and the material result is used.
     """
     global _client
     if _client is None:
@@ -99,11 +172,11 @@ def classify(image: "str | Image.Image") -> ClassificationResult:
             raw[model_id] = jobs[model_id].result()
         except Exception:
             log.exception("E-waste model %s failed; using the material result only", model_id)
+    return raw
 
-    materials = [
-        Prediction(p.name.upper(), p.confidence, p.box, p.name)
-        for p in _parse(raw[MATERIAL_MODEL])
-    ]
+
+def _ewaste_candidates(raw: dict) -> list["Prediction"]:
+    """Every electronics and battery detection, before any thresholds."""
     electronics = [
         Prediction("ELECTRONICS", p.confidence, p.box, p.name)
         for p in _parse(raw.get(ELECTRONICS_MODEL, {}))
@@ -113,6 +186,22 @@ def classify(image: "str | Image.Image") -> ClassificationResult:
         Prediction("BATTERY", p.confidence, p.box, p.name)
         for p in _parse(raw.get(BATTERY_MODEL, {}))
     ]
+    return electronics + batteries
+
+
+def decide(raw: dict) -> ClassificationResult:
+    """Pick the answer from the Roboflow models' raw responses (keyed by model ID).
+
+    Separate from the network calls so backend/eval can replay saved responses.
+    """
+    materials = [
+        Prediction(p.name.upper(), p.confidence, p.box, p.name)
+        for p in _parse(raw[MATERIAL_MODEL])
+        if p.confidence >= MATERIAL_THRESHOLD
+    ]
+    candidates = _ewaste_candidates(raw)
+    electronics = [p for p in candidates if p.label == "ELECTRONICS"]
+    batteries = [p for p in candidates if p.label == "BATTERY"]
     return _merge(materials, electronics, batteries, raw)
 
 

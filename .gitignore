@@ -8,3 +8,7 @@ __pycache__/
 
 # Editor
 .vscode/
+
+# Test photos for backend/eval (downloaded, each with its own license)
+backend/eval/images/
+backend/eval/cache.json

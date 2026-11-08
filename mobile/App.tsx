@@ -39,6 +39,7 @@ export default function App() {
                 found: r.found,
                 confident: r.confident,
                 confidence: r.confidence,
+                itemName: r.item_name,
                 nearby: r.nearby,
               },
             })
