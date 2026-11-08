@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { getNearby, Nearby, Rule } from "../api";
-import { currentCoords } from "../location";
+import { locate, LocationProblem, locationHelp } from "../location";
 
 type Props = {
   rule: Rule;
@@ -15,6 +15,8 @@ export default function NearbySpots({ rule, initial }: Props) {
   const [nearby, setNearby] = useState<Nearby | null>(initial ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Why location is missing, so the user knows what to fix (blocked, turned off, too slow...).
+  const [problem, setProblem] = useState<LocationProblem | null>(null);
 
   async function load() {
     if (!rule.key) return;
@@ -23,7 +25,8 @@ export default function NearbySpots({ rule, initial }: Props) {
     try {
       // Shows the location prompt the first time. If the user says no, the server's
       // response carries a note asking them to enable it.
-      const coords = await currentCoords(true);
+      const { coords, problem } = await locate(true);
+      setProblem(problem);
       setNearby(await getNearby(rule.key, coords));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't load drop-off spots.");
@@ -69,6 +72,9 @@ export default function NearbySpots({ rule, initial }: Props) {
         ))}
 
       {!loading && nearby?.note && <Text style={styles.note}>{nearby.note}</Text>}
+      {!loading && nearby?.needs_location && problem && (
+        <Text style={styles.help}>{locationHelp(problem)}</Text>
+      )}
       {!loading && error && <Text style={styles.note}>{error}</Text>}
 
       {!loading && (nearby?.needs_location || error) && (
@@ -110,5 +116,6 @@ const styles = StyleSheet.create({
   distance: { fontSize: 15, fontWeight: "600", color: "#333" },
   muted: { fontSize: 14, color: "#666" },
   note: { fontSize: 15, color: "#333", fontStyle: "italic", lineHeight: 21 },
+  help: { fontSize: 14, color: "#555", lineHeight: 20 },
   link: { fontSize: 15, color: "#2E7DD7", fontWeight: "600" },
 });
