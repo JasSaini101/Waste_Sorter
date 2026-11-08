@@ -39,6 +39,7 @@ export type Box = [number, number, number, number]; // center x, center y, width
 export type ScanResult = {
   found: boolean;
   confidence: number | null;
+  item_name: string | null; // e.g. "AA battery", when the AI second opinion named it
   confident: boolean;
   box: Box | null;
   image_size: { width: number; height: number };

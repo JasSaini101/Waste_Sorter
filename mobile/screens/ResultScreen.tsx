@@ -10,6 +10,7 @@ export type ResultInfo = {
   found: boolean; // false = the model detected nothing
   confident: boolean;
   confidence: number | null; // null when picked from manual lookup
+  itemName?: string | null; // What the AI saw, e.g. "AA battery"
   nearby?: Nearby | null; // Drop-off spots from the scan; fetched on screen when missing
 };
 
@@ -54,6 +55,9 @@ export default function ResultScreen({ result, onScanAgain, onLookup, onInfo }: 
             <Text style={styles.bin}>{rule.bin_label}</Text>
           </View>
           <Text style={styles.item}>{heading}</Text>
+          {found && !!result.itemName && (
+            <Text style={styles.confidence}>Looks like: {result.itemName}</Text>
+          )}
           {confidence !== null && found && (
             <Text style={styles.confidence}>{Math.round(confidence * 100)}% sure</Text>
           )}

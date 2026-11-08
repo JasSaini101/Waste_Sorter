@@ -3,8 +3,8 @@
 The material model (garbage-classification-3/2) knows 7 classes:
 PLASTIC, GLASS, METAL, PAPER, CARDBOARD, BIODEGRADABLE, CLOTH.
 classifier.py adds ELECTRONICS and BATTERY from two extra models.
-There is still no "trash" class, so items like chip bags get forced into
-one of these or aren't detected at all.
+TRASH only comes from the Gemini second opinion (referee.py); the Roboflow
+models have no trash class.
 
 These are general US curbside guidelines. Recycling rules vary by
 city, so check them against your local program before the demo.
@@ -87,7 +87,8 @@ RULES: dict[str, Rule] = {
         bin="donate",
         tip="Donate if it's wearable, otherwise use a textile recycling drop-off.",
         exceptions=["Don't put textiles in the curbside recycling bin."],
-        dropoff="clothing donation",
+        # Thrift stores take donations; plain "clothing donation" also finds food banks.
+        dropoff="donate clothes thrift store",
     ),
     "ELECTRONICS": Rule(
         item="Electronics",
@@ -98,7 +99,8 @@ RULES: dict[str, Rule] = {
             "Still works? Donate it or sell it.",
             "Remove loose batteries and drop them off separately.",
         ],
-        dropoff="electronics recycling",
+        # Plain "electronics recycling" also finds phone shops.
+        dropoff="e-waste recycling center",
     ),
     "BATTERY": Rule(
         item="Battery",
@@ -109,7 +111,7 @@ RULES: dict[str, Rule] = {
             "Swollen or damaged lithium batteries: store in a cool place and drop off soon.",
             "Car batteries: return to an auto parts store.",
         ],
-        dropoff="battery recycling",
+        dropoff="household battery recycling",
     ),
     "TRASH": Rule(
         item="Trash",
@@ -118,6 +120,16 @@ RULES: dict[str, Rule] = {
         exceptions=["Hazardous waste, batteries, electronics: use a drop-off point."],
     ),
 }
+
+RULES["TRASH"] = Rule(
+    item="Trash",
+    bin="trash",
+    tip="This can't be recycled or composted. Put it in the regular trash.",
+    exceptions=[
+        "Still usable? Donate it instead.",
+        "Chip bags and plastic film: some stores collect them with plastic bags.",
+    ],
+)
 
 UNKNOWN = Rule(
     item="Unknown item",

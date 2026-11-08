@@ -49,6 +49,39 @@ Test the model from the command line:
 python backend/main.py path/to/photo.jpg
 ```
 
+### AI second opinion (optional Gemini key)
+
+The Roboflow models are often wrong, for example calling a plastic tub "glass" or a mug a "battery". So `backend/referee.py` also asks Google's Gemini vision model, at the same time as Roboflow, and its answer wins.
+
+On the 67-photo test set (`backend/eval`):
+
+| Mode | Right item | Right bin |
+|---|---|---|
+| Roboflow only | 58% | 72% |
+| Gemini on unclear scans | 94% | 99% |
+| Gemini on every scan (default) | 99% | 99% |
+
+Gemini also adds categories the models don't have: **Trash** (mugs, chip bags, styrofoam), plus a specific item name the app shows ("Looks like: AA battery"). Scans take about 2–3 seconds.
+
+To turn it on:
+1. Get a free key at https://aistudio.google.com → **Get API key**. No billing is needed.
+2. Put it in `backend/.env` as `GEMINI_API_KEY=...`, and add it to Render (`waste-sorter-api` → **Environment**).
+3. Check `/health` shows `"second_opinion_configured": true`.
+
+Notes:
+- The free tier allows about 10 requests a minute, and Google may use free-tier images to improve its models.
+- If Gemini is unavailable or rate-limited, the Roboflow answer is used.
+- `SECOND_OPINION=unclear` asks only when Roboflow is unsure (fewer calls); `off` disables it.
+
+### Measuring accuracy
+
+```bash
+python backend/eval/fetch_test_set.py   # ~70 labeled photos from Wikimedia Commons (not committed)
+python backend/eval/evaluate.py         # right item / right bin, per class, every mistake
+```
+
+The models' answers are saved, so re-scoring after a change to `classifier.decide()` takes a second. With a Gemini key, the report compares Roboflow only, Gemini on unclear scans, and Gemini on every scan.
+
 ### Nearest drop-off spots (optional Google key)
 
 For electronics, batteries and clothes, the result screen asks for the user's location and lists the 3 closest drop-off spots, using the Google Places API.
@@ -60,6 +93,7 @@ To turn the list on:
 2. Enable **Places API (New)**, then create an API key under **APIs & Services → Credentials**.
 3. Restrict the key to Places API (New).
 4. Put it in `backend/.env` as `GOOGLE_MAPS_API_KEY=...`, and add the same variable in Render (`waste-sorter-api` → **Environment**).
+5. Check it: `/health` shows `"nearby_configured": true` once the server can see the key (for Render, after the redeploy finishes).
 
 The key stays on the server and is sent to Google in a header. The user's location is rounded to about 1 km before it's sent to Google, and it isn't stored or logged.
 
