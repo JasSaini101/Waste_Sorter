@@ -7,10 +7,21 @@ Point your phone camera at something you're about to throw away, and the app tel
 
 ```
 Phone app (mobile/)  --photo-->  Backend API (backend/)  --image-->  Roboflow model
-                     <--JSON---  maps material -> bin    <--boxes--  garbage-classification-3/2
+                     <--JSON---  picks the answer,   <--boxes--  3 models, in parallel
+                                 maps it -> bin
 ```
 
-The model detects 7 materials: plastic, glass, metal, paper, cardboard, biodegradable and cloth. `backend/disposal_rules.py` turns each one into a bin plus instructions.
+The backend runs three Roboflow models on every photo, at the same time:
+
+| Model | Detects |
+|---|---|
+| `garbage-classification-3/2` | 7 materials: plastic, glass, metal, paper, cardboard, biodegradable, cloth |
+| `yolov8n-640` (stock COCO) | Electronics: phones, laptops, keyboards, mice, remotes, TVs, small appliances |
+| [`battery-detection-and-counts/1`](https://universe.roboflow.com/mrkhai/battery-detection-and-counts) | AA, AAA, 9V, coin and 18650 batteries |
+
+The material model alone would call a phone "metal" and a battery "paper" and say "Recycle", which is dangerous: batteries start fires in recycling trucks. So electronics and batteries override the material result and go to **E-waste drop-off**. The battery model also mistakes cans and boxes for batteries, so a battery only wins when it's more confident than the material model. The thresholds are at the top of `backend/classifier.py`.
+
+`backend/disposal_rules.py` turns the answer into a bin plus instructions.
 
 The phone never talks to Roboflow directly, so the API key stays on the server.
 
@@ -37,6 +48,20 @@ Test the model from the command line:
 ```bash
 python backend/main.py path/to/photo.jpg
 ```
+
+### Nearest drop-off spots (optional Google key)
+
+For electronics, batteries and clothes, the result screen asks for the user's location and lists the 3 closest drop-off spots, using the Google Places API.
+- If the user says no, the server sends back a note asking them to enable location.
+- Without a key, the app shows a Google Maps search link instead of the list.
+
+To turn the list on:
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and turn on billing. A hackathon's usage stays within Google's free monthly allowance.
+2. Enable **Places API (New)**, then create an API key under **APIs & Services → Credentials**.
+3. Restrict the key to Places API (New).
+4. Put it in `backend/.env` as `GOOGLE_MAPS_API_KEY=...`, and add the same variable in Render (`waste-sorter-api` → **Environment**).
+
+The key stays on the server and is sent to Google in a header. The user's location is rounded to about 1 km before it's sent to Google, and it isn't stored or logged.
 
 ## Deploy (Render, free)
 

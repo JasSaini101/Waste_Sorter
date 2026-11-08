@@ -11,13 +11,15 @@ import html
 import io
 import os
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from PIL import Image, UnidentifiedImageError
+from pydantic import BaseModel, Field
 
 from classifier import classify
-from disposal_rules import RULES, rule_for, rule_to_dict
+from disposal_rules import RULES, Rule, rule_for, rule_to_dict
+from places import nearby
 
 # Below this, the app should say "Probably X" and let the user confirm.
 CONFIDENT_THRESHOLD = 0.5
@@ -71,8 +73,18 @@ def rules() -> list[dict]:
     return [rule_to_dict(key, rule) for key, rule in RULES.items()]
 
 
+def _nearby_for(rule: Rule, lat: float | None, lon: float | None) -> dict | None:
+    """Nearest drop-off spots, only for items that need one (e-waste, batteries, clothes)."""
+    return nearby(rule.dropoff, lat, lon) if rule.dropoff else None
+
+
 @app.post("/scan")
-def scan(image: UploadFile = File(...)) -> dict:
+def scan(
+    image: UploadFile = File(...),
+    # The user's location, only sent if they allowed it. Used to find drop-off spots, never stored.
+    lat: float | None = Form(None, ge=-90, le=90),
+    lon: float | None = Form(None, ge=-180, le=180),
+) -> dict:
     """Detect the waste in a photo and say how to dispose of it.
 
     Defined with `def` (not `async def`) so the blocking Roboflow call
@@ -104,9 +116,28 @@ def scan(image: UploadFile = File(...)) -> dict:
         "box": top.box if top else None,
         "image_size": {"width": img.width, "height": img.height},
         "rule": rule_to_dict(top.label.upper() if top else None, rule),
+        # Closest drop-off spots, or a note asking for location. null if the item goes in a home bin.
+        "nearby": _nearby_for(rule, lat, lon),
         # Everything detected, most confident first, for drawing boxes or a "Did you mean" list.
         "detections": [
-            {"label": p.label, "confidence": p.confidence, "box": p.box}
+            {"label": p.label, "name": p.name, "confidence": p.confidence, "box": p.box}
             for p in result.predictions
         ],
     }
+
+
+class NearbyRequest(BaseModel):
+    key: str  # Rule key, e.g. "BATTERY"
+    lat: float | None = Field(None, ge=-90, le=90)
+    lon: float | None = Field(None, ge=-180, le=180)
+
+
+@app.post("/nearby")
+def nearby_spots(req: NearbyRequest) -> dict | None:
+    """Drop-off spots for a rule, e.g. after picking it on the lookup screen.
+
+    POST so the location goes in the body, not in URLs that end up in server logs.
+    """
+    if req.key.upper() not in RULES:
+        raise HTTPException(404, f"Unknown item: {req.key}")
+    return _nearby_for(RULES[req.key.upper()], req.lat, req.lon)

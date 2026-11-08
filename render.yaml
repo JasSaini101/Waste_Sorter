@@ -16,6 +16,9 @@ services:
         value: 3.11.11
       - key: ROBOFLOW_API_KEY
         sync: false
+      # Optional, for nearest drop-off spots. Add it in the service's Environment tab.
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
 
   # Web version of the phone app: anyone can open it in a phone browser, no Expo Go needed.
   - type: web

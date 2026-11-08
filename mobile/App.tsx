@@ -34,9 +34,15 @@ export default function App() {
           onResult={(r) => {
             setScreen({
               name: "result",
-              result: { rule: r.rule, found: r.found, confident: r.confident, confidence: r.confidence },
-            });
-          }}
+              result: {
+                rule: r.rule,
+                found: r.found,
+                confident: r.confident,
+                confidence: r.confidence,
+                nearby: r.nearby,
+              },
+            })
+          }
         />
       )}
       {screen.name === "lookup" && (
