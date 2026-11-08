@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ItemIllustration from "../components/ItemIllustration";
 
@@ -9,7 +9,7 @@ type Props = {
 export default function AboutScreen({ onBack }: Props) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = width < 900;
+  const compact = width < 1024;
 
   return (
     <ScrollView
@@ -25,19 +25,12 @@ export default function AboutScreen({ onBack }: Props) {
         </Pressable>
       </View>
       <View style={styles.header}>
-        <View style={styles.brandMark}>
-          <View style={styles.trashCan}>
-            <View style={styles.trashLid} />
-            <View style={styles.trashHandle} />
-            <View style={styles.trashBody}>
-              <View style={styles.trashRib} />
-              <View style={styles.trashRib} />
-            </View>
-          </View>
-          <View style={styles.trashCrossFirst} />
-          <View style={styles.trashCrossSecond} />
-        </View>
-        <Text style={styles.brandName}>WasteLess</Text>
+        <Image
+          source={require("../assets/wasteLess.png")}
+          style={styles.brandLogo}
+          resizeMode="contain"
+          accessibilityLabel="WasteLess"
+        />
       </View>
 
       <View style={[styles.hero, compact && styles.heroCompact]}>
@@ -51,14 +44,13 @@ export default function AboutScreen({ onBack }: Props) {
             WasteLess helps you figure out what to do with everyday disposable items. Scan something for an
             identification, or browse the guide for instructions when you know what you're sorting.
           </Text>
-        </View>
-
-        <View style={styles.goalSection}>
-          <Text style={styles.goalEyebrow}>OUR GOAL</Text>
-          <Text style={styles.goalMessage}>
-            Bridging the knowledge gap that causes improper disposal (like pizza boxes in recycling)
-            through AI-powered classification and guidance.
-          </Text>
+          <View style={styles.goalSection}>
+            <Text style={styles.goalEyebrow}>OUR GOAL</Text>
+            <Text style={styles.goalMessage}>
+              Bridging the knowledge gap that causes improper disposal (like pizza boxes in recycling)
+              through AI-powered classification and guidance.
+            </Text>
+          </View>
         </View>
 
         <View style={[styles.illustration, compact && styles.illustrationCompact]}>
@@ -76,13 +68,14 @@ export default function AboutScreen({ onBack }: Props) {
           </View>
           <Text style={styles.illustrationCaption}>A brighter future starts with small things.</Text>
         </View>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>Small actions make a difference</Text>
-          <Text style={styles.infoCardText}>
-            Recycling, composting, and donating usable items can help reduce waste. Disposal
-            guidance varies by location, so check your local program for the rules where you live.
-          </Text>
-        </View>
+      </View>
+
+      <View style={styles.infoCard}>
+        <Text style={styles.infoCardTitle}>Small actions make a difference</Text>
+        <Text style={styles.infoCardText}>
+          Recycling, composting, and donating usable items can help reduce waste. Disposal
+          guidance varies by location, so check your local program for the rules where you live.
+        </Text>
       </View>
 
       <View style={[styles.steps, compact && styles.stepsCompact]}>
@@ -190,64 +183,7 @@ const styles = StyleSheet.create({
   },
   backButton: { paddingVertical: 8, paddingRight: 12, marginRight: 8 },
   backText: { color: "#286B42", fontSize: 14, fontWeight: "700" },
-  brandMark: {
-    width: 42,
-    height: 42,
-    borderRadius: 42,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#DCEBD5",
-  },
-  trashCan: { width: 22, height: 25, alignItems: "center", justifyContent: "flex-end" },
-  trashLid: {
-    position: "absolute",
-    top: 5,
-    width: 20,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: "#267044",
-  },
-  trashHandle: {
-    position: "absolute",
-    top: 2,
-    width: 7,
-    height: 3,
-    borderWidth: 1.5,
-    borderBottomWidth: 0,
-    borderColor: "#267044",
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
-  },
-  trashBody: {
-    width: 15,
-    height: 17,
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    paddingTop: 4,
-    borderWidth: 2,
-    borderTopWidth: 0,
-    borderColor: "#267044",
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-  },
-  trashRib: { width: 1.5, height: 8, borderRadius: 1, backgroundColor: "#267044" },
-  trashCrossFirst: {
-    position: "absolute",
-    width: 28,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "#267044",
-    transform: [{ rotate: "45deg" }],
-  },
-  trashCrossSecond: {
-    position: "absolute",
-    width: 28,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "#267044",
-    transform: [{ rotate: "-45deg" }],
-  },
-  brandName: { color: "#183D2A", fontSize: 38, fontWeight: "800", marginLeft: 10 },
+  brandLogo: { width: 280, height: 66 },
   headerNote: { color: "#758477", fontSize: 13, marginLeft: "auto" },
   hero: {
     width: "100%",
@@ -261,10 +197,11 @@ const styles = StyleSheet.create({
     paddingVertical: 44,
   },
   heroCompact: { flexDirection: "column", justifyContent: "center", gap: 28, paddingVertical: 36 },
-  copy: { flex: 1, maxWidth: 520 },
+  copy: { flex: 1, minWidth: 0, maxWidth: 520 },
   copyCompact: { width: "100%", alignItems: "center" },
   eyebrow: { color: "#4D8158", fontSize: 12, fontWeight: "800", letterSpacing: 2 },
   title: {
+    width: "100%",
     color: "#193B2A",
     fontSize: 58,
     fontWeight: "800",
@@ -275,6 +212,7 @@ const styles = StyleSheet.create({
   titleCompact: { fontSize: 44, lineHeight: 50, letterSpacing: -1.5, textAlign: "center" },
   titleAccent: { color: "#4E8A50" },
   description: {
+    width: "100%",
     color: "#5D6E60",
     fontSize: 17,
     lineHeight: 27,
@@ -282,18 +220,26 @@ const styles = StyleSheet.create({
     maxWidth: 450,
   },
   descriptionCompact: { textAlign: "center" },
-  infoCard: { backgroundColor: "#E8F0E2", borderRadius: 18, padding: 18, marginTop: 24, maxWidth: 450 },
+  infoCard: {
+    width: "100%",
+    maxWidth: 1040,
+    backgroundColor: "#E8F0E2",
+    borderRadius: 18,
+    padding: 18,
+    marginTop: 24,
+    marginBottom: 28,
+  },
   infoCardTitle: { color: "#274A31", fontSize: 16, fontWeight: "800", marginBottom: 8 },
   infoCardText: { color: "#5D6E60", fontSize: 14, lineHeight: 22 },
   goalSection: {
     width: "100%",
-    maxWidth: 1040,
-    padding: 24,
+    maxWidth: 450,
+    padding: 18,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#DDE7D8",
     backgroundColor: "#FAFDF8",
-    marginBottom: 28,
+    marginTop: 24,
   },
   goalEyebrow: { color: "#4D8158", fontSize: 12, fontWeight: "800", letterSpacing: 2 },
   goalMessage: { color: "#274A31", fontSize: 18, fontWeight: "600", lineHeight: 28, marginTop: 10 },
